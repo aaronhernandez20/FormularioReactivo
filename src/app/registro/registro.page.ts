@@ -62,9 +62,9 @@ function fechaNoFutura(control: AbstractControl): ValidationErrors | null {
 }
 
 @Component({
-  selector: 'app-home',
-  templateUrl: 'home.page.html',
-  styleUrls: ['home.page.scss'],
+  selector: 'app-registro',
+  templateUrl: 'registro.page.html',
+  styleUrls: ['registro.page.scss'],
   imports: [
     ReactiveFormsModule,
     IonHeader,
@@ -82,7 +82,7 @@ function fechaNoFutura(control: AbstractControl): ValidationErrors | null {
     IonToast
   ]
 })
-export class HomePage {
+export class RegistroPage {
   private fb = inject(FormBuilder);
   theme = inject(ThemeService);
 
@@ -99,8 +99,22 @@ export class HomePage {
     nombre: ['', [Validators.required]],
     categoria: ['', [Validators.required]],
     stockMinimo: ['', [Validators.required, stockMayorQueCero]],
-    fechaNacimiento: ['', [Validators.required, fechaNoFutura]]
+    fechaNacimiento: ['', [Validators.required, fechaNoFutura]],
+    password: ['', [
+      Validators.required,
+      // Mínimo 8 caracteres, al menos una letra y un número
+      Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/)
+    ]]
   });
+
+  // Hash SHA-256 de la contraseña, en hexadecimal (64 caracteres)
+  private async cifrarPassword(password: string): Promise<string> {
+    const datos = new TextEncoder().encode(password);
+    const hash = await crypto.subtle.digest('SHA-256', datos);
+    return Array.from(new Uint8Array(hash))
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  }
 
   async onSubmit(): Promise<void> {
     if (this.productoForm.invalid) {
@@ -121,7 +135,11 @@ export class HomePage {
     this.productoForm.disable();
 
     try {
-      console.log('Producto a guardar:', producto);
+      const passwordCifrada = await this.cifrarPassword(valores.password ?? '');
+
+      // La contraseña en claro nunca llega a la consola
+      console.log('Payload a enviar:', { ...producto, password: passwordCifrada });
+
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       this.ultimoEnvio.set(producto);
