@@ -1,6 +1,11 @@
 <ion-header>
   <ion-toolbar color="primary">
     <ion-title>Alta de producto</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="theme.toggle()">
+        {{ theme.dark ? '☀️ Modo claro' : '🌙 Modo oscuro' }}
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -61,7 +66,7 @@
           type="date"
           [max]="hoy"
           formControlName="fechaNacimiento"
-          errorText="Introduce una fecha de nacimiento válida (no puede ser futura).">
+          errorText="Introduce una fecha de nacimiento válida (no puede ser posterior a hoy).">
         </ion-input>
       </ion-item>
 
@@ -74,16 +79,24 @@
         [disabled]="productoForm.invalid || isSubmitting()">
         Guardar producto
       </ion-button>
+
+      @if (ultimoEnvio()) {
+        <ion-button
+          expand="block"
+          fill="outline"
+          type="button"
+          (click)="descargarPdf()">
+          Descargar PDF del último envío
+        </ion-button>
+      }
     </div>
   </form>
 
-  <!-- Loader mientras se simula el guardado -->
   <ion-loading
     [isOpen]="isSubmitting()"
     message="Guardando producto...">
   </ion-loading>
 
-  <!-- Confirmación del guardado local -->
   <ion-toast
     [isOpen]="toastOpen()"
     [message]="toastMessage()"
